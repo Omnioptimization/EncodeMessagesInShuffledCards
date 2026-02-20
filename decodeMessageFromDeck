@@ -1,0 +1,54 @@
+// DECODE FUNCTION
+
+function decodeMessageFromDeck(charSet, encodedDeck, originalDeck) {
+    const base = BigInt(charSet.length);
+    const n = originalDeck.length;
+
+    if (encodedDeck.length !== n) {
+        throw new Error("Encoded deck and original deck must have same length");
+    }
+
+    // Map original deck positions
+    const originalIndex = {};
+    originalDeck.forEach((card, i) => {
+        originalIndex[card] = i;
+    });
+
+    const remaining = [...originalDeck];
+    let messageValue = 0n;
+
+    for (let i = 0; i < n; i++) {
+        const card = encodedDeck[i];
+
+        const index = remaining.indexOf(card);
+        if (index === -1) {
+            throw new Error("Encoded deck contains invalid card");
+        }
+
+        // Compute factorial of remaining length - 1
+        let fact = 1n;
+        for (let j = 2n; j <= BigInt(n - i - 1); j++) {
+            fact *= j;
+        }
+
+        messageValue += BigInt(index) * fact;
+
+        remaining.splice(index, 1);
+    }
+
+    // Convert integer back to base-N message
+    let chars = [];
+
+    if (messageValue === 0n) {
+        chars.push(charSet[0]);
+    } else {
+        while (messageValue > 0n) {
+            const digit = messageValue % base;
+            chars.push(charSet[Number(digit)]);
+            messageValue = messageValue / base;
+        }
+        chars.reverse();
+    }
+
+    return chars.join("");
+}
