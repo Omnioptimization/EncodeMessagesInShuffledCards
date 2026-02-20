@@ -1,0 +1,69 @@
+// ENCODE FUNCTION
+function encodeMessageToDeck(charSet, originalDeck, message) {
+    const base = BigInt(charSet.length);
+    const n = originalDeck.length;
+
+    if (n <= 1) {
+        throw new Error("Deck must have length > 1");
+    }
+
+    // Build character → index map
+    const charIndex = {};
+    charSet.forEach((c, i) => {
+        charIndex[c] = BigInt(i);
+    });
+
+    // Compute maximum encodable integer (n!)
+    let factorial = 1n;
+    for (let i = 2n; i <= BigInt(n); i++) {
+        factorial *= i;
+    }
+
+    // Convert message to BigInt using base-N
+    let messageValue = 0n;
+    let usableLength = 0;
+
+    for (let i = 0; i < message.length; i++) {
+        const ch = message[i];
+        if (!(ch in charIndex)) {
+            throw new Error(`Character "${ch}" not in character set`);
+        }
+
+        const nextValue = messageValue * base + charIndex[ch];
+
+        if (nextValue >= factorial) {
+            console.log("Message too long for this deck. Dropping remaining characters.");
+            break;
+        }
+
+        messageValue = nextValue;
+        usableLength++;
+    }
+
+    // Convert integer to factorial digits
+    const digits = [];
+    let remainder = messageValue;
+
+    for (let i = n - 1; i >= 0; i--) {
+        let fact = 1n;
+        for (let j = 2n; j <= BigInt(i); j++) {
+            fact *= j;
+        }
+
+        const digit = remainder / fact;
+        remainder = remainder % fact;
+        digits.push(Number(digit));
+    }
+
+    // Build permutation
+    const remaining = [...originalDeck];
+    const result = [];
+
+    for (let i = 0; i < digits.length; i++) {
+        const index = digits[i];
+        result.push(remaining[index]);
+        remaining.splice(index, 1);
+    }
+
+    return result;
+}
